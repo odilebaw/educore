@@ -26,6 +26,73 @@ WAITING_NAME = 0
 
 # ============ Database Helpers ============
 
+def init_db():
+    """Database va jadvallarni yaratish (agar mavjud bo'lmasa)"""
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'educore.db')
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    conn = sqlite3.connect(db_path)
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS teachers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            center_name TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS students (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            telegram_id TEXT UNIQUE NOT NULL,
+            teacher_id INTEGER NOT NULL,
+            joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (teacher_id) REFERENCES teachers(id)
+        );
+        CREATE TABLE IF NOT EXISTS tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            teacher_id INTEGER NOT NULL,
+            topic TEXT NOT NULL,
+            level TEXT NOT NULL,
+            questions TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (teacher_id) REFERENCES teachers(id)
+        );
+        CREATE TABLE IF NOT EXISTS test_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            test_id INTEGER NOT NULL,
+            score_percent INTEGER NOT NULL,
+            answers TEXT,
+            completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (student_id) REFERENCES students(id),
+            FOREIGN KEY (test_id) REFERENCES tests(id)
+        );
+        CREATE TABLE IF NOT EXISTS homeworks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            teacher_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            level TEXT NOT NULL,
+            assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (teacher_id) REFERENCES teachers(id)
+        );
+        CREATE TABLE IF NOT EXISTS homework_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            homework_id INTEGER NOT NULL,
+            image_path TEXT,
+            ai_feedback TEXT,
+            score_percent INTEGER,
+            submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (student_id) REFERENCES students(id),
+            FOREIGN KEY (homework_id) REFERENCES homeworks(id)
+        );
+    """)
+    conn.close()
+
+# Database yaratish
+init_db()
+
 def get_db():
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'educore.db')
     return sqlite3.connect(db_path)
@@ -468,7 +535,7 @@ async def handle_homework_photo(update, context):
 
 # ============ Main ============
 
-async def main():
+def main():
     app = Application.builder().token(TOKEN).build()
 
     # Conversation handler for onboarding
@@ -493,9 +560,9 @@ async def main():
     app.add_handler(CommandHandler("homework", homework_command))
     app.add_handler(MessageHandler(filters.PHOTO, handle_homework_photo))
 
-    await app.run_polling()
+    # run_polling() o'zi event loop yaratadi — asyncio.run() KERAK EMAS
+    app.run_polling()
 
 
 if __name__ == '__main__':
-    import asyncio
-    asyncio.run(main())
+    main()
