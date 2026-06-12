@@ -11,7 +11,9 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///educore.db'
-db = SQLAlchemy(app)
+db = SQLAlchemy()
+db.init_app(app)
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 

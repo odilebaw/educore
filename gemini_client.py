@@ -1,9 +1,11 @@
 # EduCore - Gemini AI Client
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import os
 import json
 from PIL import Image
+import io
 
 
 class GeminiClient:
@@ -17,67 +19,40 @@ class GeminiClient:
         self.current_key_index = 0
         self.model_name = "gemini-2.5-flash-lite"
 
-    def _get_model(self):
+    def _get_client(self):
         key = self.keys[self.current_key_index]
-        genai.configure(api_key=key)
-        return genai.GenerativeModel(self.model_name)
+        return genai.Client(api_key=key)
 
     def generate(self, prompt, image=None):
-        """Oddiy matn generatsiyasi yoki rasm bilan generatsiya.
-        
-        Args:
-            prompt: Matn so'rovi
-            image: PIL Image yoki None
-            
-        Returns:
-            Generatsiya qilingan matn
-            
-        Raises:
-            Exception: Barcha API kalitlari ishlamasa
-        """
+        """Oddiy matn generatsiyasi yoki rasm bilan generatsiya."""
         for i in range(len(self.keys)):
             try:
-                model = self._get_model()
+                client = self._get_client()
                 if image:
-                    response = model.generate_content([prompt, image])
+                    response = client.models.generate_content(
+                        model=self.model_name,
+                        contents=[prompt, image]
+                    )
                 else:
-                    response = model.generate_content(prompt)
+                    response = client.models.generate_content(
+                        model=self.model_name,
+                        contents=prompt
+                    )
                 return response.text
             except Exception:
                 self.current_key_index = (self.current_key_index + 1) % len(self.keys)
         raise Exception("Barcha Gemini API kalitlari ishlamayapti")
 
     def generate_with_image(self, prompt, image_data):
-        """Rasm bilan generatsiya.
-        
-        Args:
-            prompt: Matn so'rovi
-            image_data: PIL Image yoki bytes formatidagi rasm
-            
-        Returns:
-            Generatsiya qilingan matn
-        """
+        """Rasm bilan generatsiya."""
         if isinstance(image_data, bytes):
-            import io
             image = Image.open(io.BytesIO(image_data))
         else:
             image = image_data
         return self.generate(prompt, image=image)
 
     def generate_test(self, topic, level, num_questions):
-        """Test yaratish funksiyasi.
-        
-        Args:
-            topic: Mavzu nomi
-            level: Daraja (masalan: Beginner, Intermediate, Advanced)
-            num_questions: Savollar soni
-            
-        Returns:
-            dict: JSON formatidagi test ma'lumotlari
-            
-        Raises:
-            Exception: 3 marta urinishdan keyin ham JSON parse bo'lmasa
-        """
+        """Test yaratish funksiyasi."""
         prompt = f"""
     Ingliz tili o'quvchilari uchun test yarating.
     
@@ -108,7 +83,6 @@ class GeminiClient:
         for attempt in range(max_attempts):
             try:
                 response_text = self.generate(prompt)
-                # JSON bloklarini tozalash
                 cleaned = response_text.strip()
                 if cleaned.startswith("```json"):
                     cleaned = cleaned[7:]
@@ -127,15 +101,7 @@ class GeminiClient:
         raise Exception(f"JSON parse xatosi (3 marta urinildi): {last_error}")
 
     def check_homework(self, homework_description, image_data):
-        """Homework tekshirish funksiyasi.
-        
-        Args:
-            homework_description: Vazifa tavsifi
-            image_data: PIL Image yoki bytes formatidagi rasm
-            
-        Returns:
-            str: O'qituvchi fikri va baho
-        """
+        """Homework tekshirish funksiyasi."""
         prompt = f"""
     Sen mehribon va sabr-toqatli ingliz tili o'qituvchisisan.
     

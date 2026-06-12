@@ -3,7 +3,7 @@ flask-sqlalchemy==3.1.1
 flask-login==0.6.3
 werkzeug==3.0.1
 python-telegram-bot==20.7
-google-generativeai==0.8.3
+google-genai>=1.0.0
 python-dotenv==1.0.0
 reportlab==4.1.0
 Pillow==10.2.0
