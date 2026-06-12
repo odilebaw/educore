@@ -109,7 +109,7 @@ def dashboard():
     if all_results:
         avg_score = round(sum(r.score_percent for r in all_results) / len(all_results), 1)
 
-    invite_link = f"t.me/EduCoreBot?start=teacher_{current_user.id}"
+    invite_link = f"t.me/UzEduCoreBot?start=teacher_{current_user.id}"
 
     return render_template('dashboard/index.html',
                            students_count=students_count,
