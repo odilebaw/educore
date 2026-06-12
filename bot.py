@@ -561,7 +561,7 @@ def main():
     app.add_handler(MessageHandler(filters.PHOTO, handle_homework_photo))
 
     # run_polling() o'zi event loop yaratadi — asyncio.run() KERAK EMAS
-    app.run_polling()
+    app.run_polling(drop_pending_updates=True)
 
 
 if __name__ == '__main__':
