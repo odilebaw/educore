@@ -1,21 +1,20 @@
 from flask import Flask, render_template, redirect, url_for, flash, request, send_file
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
 import json
 import requests
 
+from extensions import db, login_manager
+
 load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///educore.db'
-db = SQLAlchemy()
-db.init_app(app)
 
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+db.init_app(app)
+login_manager.init_app(app)
 
 
 from models import *
