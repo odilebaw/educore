@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Uy vazifasi berish</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('homework_create') }}">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Sarlavha</label>
+                        <input type="text" class="form-control" id="title" name="title"
+                               placeholder="Vazifa sarlavhasini kiriting" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Tavsif</label>
+                        <textarea class="form-control" id="description" name="description" rows="4"
+                                  placeholder="Vazifa tavsifini kiriting" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="level" class="form-label">Daraja</label>
+                        <select class="form-select" id="level" name="level" required>
+                            <option value="" disabled selected>Darajani tanlang</option>
+                            <option value="A0">A0</option>
+                            <option value="A1">A1</option>
+                            <option value="A2">A2</option>
+                            <option value="B1">B1</option>
+                            <option value="B2">B2</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Saqlash</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

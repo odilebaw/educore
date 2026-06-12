@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Uy vazifasi natijalari</h3>
+    <a href="{{ url_for('homework_create') }}" class="btn btn-primary">Yangi vazifa berish</a>
+</div>
+
+{% if results %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>O'quvchi</th>
+                        <th>Vazifa nomi</th>
+                        <th>Ball (%)</th>
+                        <th>AI Fikri</th>
+                        <th>Yuborilgan sana</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.student.name }}</td>
+                        <td>{{ result.homework.title }}</td>
+                        <td>
+                            {% if result.score_percent is not none %}
+                                <span class="badge bg-{{ 'success' if result.score_percent >= 70 else ('warning' if result.score_percent >= 50 else 'danger') }}">
+                                    {{ result.score_percent }}%
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">Tekshirilmagan</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if result.ai_feedback %}
+                            <button class="btn btn-sm btn-outline-info" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#feedback-{{ result.id }}"
+                                    aria-expanded="false">
+                                Ko'rish
+                            </button>
+                            {% else %}
+                                <span class="text-muted">Mavjud emas</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ result.submitted_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                        <td><span class="badge bg-success">Bajargan</span></td>
+                    </tr>
+                    {% if result.ai_feedback %}
+                    <tr class="collapse" id="feedback-{{ result.id }}">
+                        <td colspan="6">
+                            <div class="alert alert-info mb-0">
+                                <strong>AI Fikri:</strong><br>
+                                {{ result.ai_feedback }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card shadow-sm">
+    <div class="card-body text-center py-5">
+        <h5 class="text-muted">Hali natijalar yo'q</h5>
+        <p class="text-muted">O'quvchilar vazifalarni bajargandan so'ng natijalar shu yerda ko'rinadi.</p>
+    </div>
+</div>
+{% endif %}
+
+{% if homeworks %}
+<div class="card shadow-sm mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Berilgan vazifalar</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Sarlavha</th>
+                        <th>Daraja</th>
+                        <th>Berilgan sana</th>
+                        <th>Bajarganlar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hw in homeworks %}
+                    <tr>
+                        <td>{{ hw.title }}</td>
+                        <td><span class="badge bg-primary">{{ hw.level }}</span></td>
+                        <td>{{ hw.assigned_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ hw.results|length }} ta</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

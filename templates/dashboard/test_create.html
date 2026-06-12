@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Yangi test yaratish</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('test_create') }}" id="testForm">
+                    <div class="mb-3">
+                        <label for="topic" class="form-label">Mavzu</label>
+                        <input type="text" class="form-control" id="topic" name="topic"
+                               placeholder="Masalan: Present Simple, Vocabulary - Food" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="level" class="form-label">Daraja</label>
+                        <select class="form-select" id="level" name="level" required>
+                            <option value="" disabled selected>Darajani tanlang</option>
+                            <option value="A0">A0</option>
+                            <option value="A1">A1</option>
+                            <option value="A2">A2</option>
+                            <option value="B1">B1</option>
+                            <option value="B2">B2</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="num_questions" class="form-label">Savollar soni</label>
+                        <select class="form-select" id="num_questions" name="num_questions" required>
+                            <option value="" disabled selected>Savol sonini tanlang</option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <span id="btnText">Test yaratish</span>
+                            <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <span id="btnLoading" class="d-none">AI ishlamoqda...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('testForm').addEventListener('submit', function() {
+    var btn = document.getElementById('submitBtn');
+    var btnText = document.getElementById('btnText');
+    var btnSpinner = document.getElementById('btnSpinner');
+    var btnLoading = document.getElementById('btnLoading');
+
+    btn.disabled = true;
+    btnText.classList.add('d-none');
+    btnSpinner.classList.remove('d-none');
+    btnLoading.classList.remove('d-none');
+});
+</script>
+{% endblock %}

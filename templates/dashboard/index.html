@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Bosh sahifa</h2>
+
+<!-- Statistika card'lar -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title">O'quvchilar soni</h5>
+                <p class="card-text display-6">{{ students_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h5 class="card-title">Testlar soni</h5>
+                <p class="card-text display-6">{{ tests_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h5 class="card-title">O'rtacha ball</h5>
+                <p class="card-text display-6">{{ avg_score }}%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Taklif havolasi -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Taklif havolasi</h5>
+        <p class="card-text">O'quvchilaringizni qo'shish uchun quyidagi havolani ulashing:</p>
+        <div class="input-group">
+            <input type="text" class="form-control" id="inviteLink" value="{{ invite_link }}" readonly>
+            <button class="btn btn-outline-primary" type="button" onclick="copyInviteLink()">Havolani nusxalash</button>
+        </div>
+    </div>
+</div>
+
+<!-- Oxirgi 5 ta test natijasi -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Oxirgi natijalar</h5>
+        {% if recent_results %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>O'quvchi</th>
+                        <th>Test</th>
+                        <th>Ball (%)</th>
+                        <th>Sana</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in recent_results %}
+                    <tr>
+                        <td>{{ result.student.name }}</td>
+                        <td>{{ result.test.topic }}</td>
+                        <td>
+                            <span class="badge {% if result.score_percent >= 70 %}bg-success{% elif result.score_percent >= 50 %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ result.score_percent }}%
+                            </span>
+                        </td>
+                        <td>{{ result.completed_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">Hali ma'lumot yo'q</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

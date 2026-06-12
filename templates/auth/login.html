@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow mt-5">
+            <div class="card-body p-4">
+                <h3 class="card-title text-center mb-4">Kirish</h3>
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Parol</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Kirish</button>
+                </form>
+                <p class="text-center mt-3 mb-0">
+                    Hisobingiz yo'qmi? <a href="{{ url_for('register') }}">Ro'yxatdan o'ting</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

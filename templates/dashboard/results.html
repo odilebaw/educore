@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Natijalar</h2>
+
+<!-- Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('results') }}" class="row align-items-end">
+            <div class="col-md-4">
+                <label for="student_id" class="form-label">O'quvchi bo'yicha filter</label>
+                <select name="student_id" id="student_id" class="form-select">
+                    <option value="">Barchasi</option>
+                    {% for student in students %}
+                    <option value="{{ student.id }}" {% if selected_student_id == student.id %}selected{% endif %}>
+                        {{ student.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary">Filtrlash</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Test natijalari -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Test natijalari</h5>
+        {% if test_results %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>O'quvchi</th>
+                        <th>Test mavzusi</th>
+                        <th>Ball (%)</th>
+                        <th>Sana</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in test_results %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ result.student.name }}</td>
+                        <td>{{ result.test.topic }}</td>
+                        <td>
+                            <span class="badge {% if result.score_percent >= 70 %}bg-success{% elif result.score_percent >= 50 %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ result.score_percent }}%
+                            </span>
+                        </td>
+                        <td>{{ result.completed_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">Hali ma'lumot yo'q</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Vazifa natijalari -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Vazifa natijalari</h5>
+        {% if homework_results %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>O'quvchi</th>
+                        <th>Vazifa</th>
+                        <th>Ball (%)</th>
+                        <th>Sana</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in homework_results %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ result.student.name }}</td>
+                        <td>{{ result.homework.title }}</td>
+                        <td>
+                            {% if result.score_percent is not none %}
+                            <span class="badge {% if result.score_percent >= 70 %}bg-success{% elif result.score_percent >= 50 %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ result.score_percent }}%
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">Tekshirilmagan</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ result.submitted_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">Hali ma'lumot yo'q</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

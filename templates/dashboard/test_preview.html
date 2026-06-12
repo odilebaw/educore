@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3>{{ test.topic }} <span class="badge bg-info">{{ test.level }}</span></h3>
+                <p class="text-muted">Yaratilgan: {{ test.created_at.strftime('%d.%m.%Y %H:%M') }} | Savollar soni: {{ questions|length }}</p>
+            </div>
+            <a href="{{ url_for('test_pdf', test_id=test.id) }}" class="btn btn-outline-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-pdf me-1" viewBox="0 0 16 16">
+                    <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/>
+                </svg>
+                PDF yuklab olish
+            </a>
+        </div>
+
+        <!-- Savollar ro'yxati -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Savollar</h5>
+            </div>
+            <div class="card-body">
+                {% for q in questions %}
+                <div class="mb-4 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                    <h6><strong>{{ loop.index }}.</strong> {{ q.question }}</h6>
+                    <div class="row mt-2">
+                        {% for key, value in q.options.items() %}
+                        <div class="col-md-6 mb-2">
+                            <div class="p-2 rounded {% if key == q.correct %}bg-success bg-opacity-25 border border-success{% else %}bg-light{% endif %}">
+                                <strong>{{ key }})</strong> {{ value }}
+                                {% if key == q.correct %}
+                                <span class="badge bg-success ms-2">To'g'ri</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if q.explanation %}
+                    <div class="mt-2">
+                        <small class="text-muted"><strong>Izoh:</strong> {{ q.explanation }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- O'quvchilarga yuborish -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">O'quvchilarga yuborish</h5>
+            </div>
+            <div class="card-body">
+                {% if students %}
+                <form method="POST" action="{{ url_for('test_send') }}">
+                    <input type="hidden" name="test_id" value="{{ test.id }}">
+
+                    <div class="mb-3">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="selectAll">
+                            <label class="form-check-label fw-bold" for="selectAll">
+                                Barchasini tanlash
+                            </label>
+                        </div>
+                        <hr>
+                        {% for student in students %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input student-checkbox" type="checkbox"
+                                   name="student_ids" value="{{ student.id }}" id="student_{{ student.id }}">
+                            <label class="form-check-label" for="student_{{ student.id }}">
+                                {{ student.name }} (Telegram ID: {{ student.telegram_id }})
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send me-1" viewBox="0 0 16 16">
+                            <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11Z"/>
+                        </svg>
+                        O'quvchilarga yuborish
+                    </button>
+                </form>
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <p>Hozircha o'quvchilar yo'q. Avval o'quvchilarni qo'shing.</p>
+                    <a href="{{ url_for('students') }}" class="btn btn-outline-primary">O'quvchilar sahifasi</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="text-center">
+            <a href="{{ url_for('test_create') }}" class="btn btn-primary">Yangi test yaratish</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary ms-2">Bosh sahifaga</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('selectAll').addEventListener('change', function() {
+    var checkboxes = document.querySelectorAll('.student-checkbox');
+    for (var i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = this.checked;
+    }
+});
+</script>
+{% endblock %}

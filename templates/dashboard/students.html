@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">O'quvchilar</h2>
+
+{% if students %}
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Ism</th>
+                <th>Telegram ID</th>
+                <th>Qo'shilgan sana</th>
+                <th>Oxirgi natija</th>
+                <th>Progress</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ student.name }}</td>
+                <td>{{ student.telegram_id }}</td>
+                <td>{{ student.joined_at.strftime('%d.%m.%Y') }}</td>
+                <td>
+                    {% if student.test_results %}
+                        {% set last_result = student.test_results | sort(attribute='completed_at') | last %}
+                        <span class="badge {% if last_result.score_percent >= 70 %}bg-success{% elif last_result.score_percent >= 50 %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ last_result.score_percent }}%
+                        </span>
+                    {% else %}
+                        <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if student.test_results %}
+                        {% set last_result = student.test_results | sort(attribute='completed_at') | last %}
+                        <div class="progress" style="min-width: 100px;">
+                            <div class="progress-bar {% if last_result.score_percent >= 70 %}bg-success{% elif last_result.score_percent >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                                 role="progressbar"
+                                 style="width: {{ last_result.score_percent }}%"
+                                 aria-valuenow="{{ last_result.score_percent }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                {{ last_result.score_percent }}%
+                            </div>
+                        </div>
+                    {% else %}
+                        <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+    Hali ma'lumot yo'q
+</div>
+{% endif %}
+{% endblock %}
