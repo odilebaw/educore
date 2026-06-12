@@ -9,7 +9,7 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 import os
-import sqlite3
+import psycopg2
 import json
 import re
 from gemini_client import GeminiClient
@@ -28,37 +28,42 @@ WAITING_NAME = 0
 
 def init_db():
     """Database va jadvallarni yaratish (agar mavjud bo'lmasa)"""
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'educore.db')
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn = sqlite3.connect(db_path)
-    conn.executescript("""
+    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+    cursor = conn.cursor()
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS teachers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             center_name TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+        )
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             telegram_id TEXT UNIQUE NOT NULL,
             teacher_id INTEGER NOT NULL,
             joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (teacher_id) REFERENCES teachers(id)
-        );
+        )
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS tests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             teacher_id INTEGER NOT NULL,
             topic TEXT NOT NULL,
             level TEXT NOT NULL,
             questions TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (teacher_id) REFERENCES teachers(id)
-        );
+        )
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS test_results (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL,
             test_id INTEGER NOT NULL,
             score_percent INTEGER NOT NULL,
@@ -66,18 +71,22 @@ def init_db():
             completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (student_id) REFERENCES students(id),
             FOREIGN KEY (test_id) REFERENCES tests(id)
-        );
+        )
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS homeworks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             teacher_id INTEGER NOT NULL,
             title TEXT NOT NULL,
             description TEXT NOT NULL,
             level TEXT NOT NULL,
             assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (teacher_id) REFERENCES teachers(id)
-        );
+        )
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS homework_results (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL,
             homework_id INTEGER NOT NULL,
             image_path TEXT,
@@ -86,21 +95,22 @@ def init_db():
             submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (student_id) REFERENCES students(id),
             FOREIGN KEY (homework_id) REFERENCES homeworks(id)
-        );
+        )
     """)
+    conn.commit()
     conn.close()
 
 # Database yaratish
 init_db()
 
 def get_db():
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'educore.db')
-    return sqlite3.connect(db_path)
+    return psycopg2.connect(os.getenv('DATABASE_URL'))
 
 
 def get_teacher_by_id(teacher_id):
     conn = get_db()
-    cursor = conn.execute("SELECT id, name FROM teachers WHERE id = ?", (teacher_id,))
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM teachers WHERE id = %s", (teacher_id,))
     teacher = cursor.fetchone()
     conn.close()
     return teacher
@@ -108,7 +118,8 @@ def get_teacher_by_id(teacher_id):
 
 def get_student_by_telegram_id(telegram_id):
     conn = get_db()
-    cursor = conn.execute("SELECT id, name FROM students WHERE telegram_id = ?", (telegram_id,))
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM students WHERE telegram_id = %s", (telegram_id,))
     student = cursor.fetchone()
     conn.close()
     return student
@@ -116,8 +127,9 @@ def get_student_by_telegram_id(telegram_id):
 
 def create_student(name, telegram_id, teacher_id):
     conn = get_db()
-    conn.execute(
-        "INSERT INTO students (name, telegram_id, teacher_id) VALUES (?, ?, ?)",
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO students (name, telegram_id, teacher_id) VALUES (%s, %s, %s)",
         (name, telegram_id, teacher_id),
     )
     conn.commit()
@@ -127,10 +139,11 @@ def create_student(name, telegram_id, teacher_id):
 def get_tests_for_student(telegram_id):
     """O'quvchining teacher_id si orqali barcha testlarni olish"""
     conn = get_db()
-    cursor = conn.execute(
+    cursor = conn.cursor()
+    cursor.execute(
         "SELECT t.id, t.topic, t.level FROM tests t "
         "JOIN students s ON s.teacher_id = t.teacher_id "
-        "WHERE s.telegram_id = ?", (telegram_id,))
+        "WHERE s.telegram_id = %s", (telegram_id,))
     tests = cursor.fetchall()
     conn.close()
     return tests
@@ -139,7 +152,8 @@ def get_tests_for_student(telegram_id):
 def get_test_questions(test_id):
     """Test savollarini JSON sifatida olish"""
     conn = get_db()
-    cursor = conn.execute("SELECT questions FROM tests WHERE id = ?", (test_id,))
+    cursor = conn.cursor()
+    cursor.execute("SELECT questions FROM tests WHERE id = %s", (test_id,))
     row = cursor.fetchone()
     conn.close()
     if row:
@@ -150,8 +164,9 @@ def get_test_questions(test_id):
 def save_test_result(student_id, test_id, score_percent, answers_json):
     """Test natijasini saqlash"""
     conn = get_db()
-    conn.execute(
-        "INSERT INTO test_results (student_id, test_id, score_percent, answers) VALUES (?, ?, ?, ?)",
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO test_results (student_id, test_id, score_percent, answers) VALUES (%s, %s, %s, %s)",
         (student_id, test_id, score_percent, answers_json))
     conn.commit()
     conn.close()
@@ -160,10 +175,11 @@ def save_test_result(student_id, test_id, score_percent, answers_json):
 def get_active_homework_for_student(telegram_id):
     """O'quvchining teacher_id si orqali eng oxirgi vazifani olish"""
     conn = get_db()
-    cursor = conn.execute(
+    cursor = conn.cursor()
+    cursor.execute(
         "SELECT h.id, h.title, h.description, h.level FROM homeworks h "
         "JOIN students s ON s.teacher_id = h.teacher_id "
-        "WHERE s.telegram_id = ? "
+        "WHERE s.telegram_id = %s "
         "ORDER BY h.assigned_at DESC LIMIT 1", (telegram_id,))
     homework = cursor.fetchone()
     conn.close()
@@ -173,9 +189,10 @@ def get_active_homework_for_student(telegram_id):
 def save_homework_result(student_id, homework_id, ai_feedback, score_percent):
     """Homework natijasini saqlash"""
     conn = get_db()
-    conn.execute(
+    cursor = conn.cursor()
+    cursor.execute(
         "INSERT INTO homework_results (student_id, homework_id, ai_feedback, score_percent) "
-        "VALUES (?, ?, ?, ?)",
+        "VALUES (%s, %s, %s, %s)",
         (student_id, homework_id, ai_feedback, score_percent))
     conn.commit()
     conn.close()
